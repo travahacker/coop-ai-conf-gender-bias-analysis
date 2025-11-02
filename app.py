@@ -141,14 +141,12 @@ def analyze_gender_bias():
     # ========== CHART 6: TOP MASCULINE-ONLY SESSIONS ===========
     male_only_long = sessions[sessions['type'] == 'Male Only'].nlargest(7, 'duration_min')
     
-    fig6, ax6 = plt.subplots(figsize=(10, 6))
-    # Truncar títulos longos
-    titles_short = [t[:50] + '...' if len(t) > 50 else t for t in male_only_long['title']]
-    y_pos = range(len(titles_short))
+    fig6, ax6 = plt.subplots(figsize=(14, 7))
+    y_pos = range(len(male_only_long))
     
     bars = ax6.barh(y_pos, male_only_long['duration_min'], color='#4A90E2')
     ax6.set_yticks(y_pos)
-    ax6.set_yticklabels(titles_short, fontsize=10)
+    ax6.set_yticklabels(male_only_long['title'], fontsize=9)
     ax6.set_xlabel('Duration (minutes)', fontsize=12, weight='bold')
     ax6.set_title('Longest Masculine-Only Sessions', fontsize=16, weight='bold', pad=20)
     ax6.invert_yaxis()
@@ -156,6 +154,9 @@ def analyze_gender_bias():
     # Add duration labels
     for i, (bar, dur) in enumerate(zip(bars, male_only_long['duration_min'])):
         ax6.text(dur + 2, i, f'{int(dur)} min', va='center', fontsize=10, weight='bold')
+    
+    # Ajustar layout para caber os títulos
+    plt.subplots_adjust(left=0.45)
     
     # ========== CHART 7: AVERAGE DURATION BY TYPE ===========
     avg_duration = sessions.groupby('type')['duration_min'].mean().reindex(['Female Only', 'Mixed', 'Male Only'])
