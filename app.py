@@ -27,7 +27,7 @@ def analyze_gender_bias():
     colors = ['#E94B8B', '#4A90E2']
     wedges, texts, autotexts = ax1.pie(
         [female_percent, male_percent],
-        labels=['Female', 'Male'],
+        labels=['Feminine', 'Masculine'],
         colors=colors,
         autopct='%1.1f%%',
         startangle=90,
@@ -37,7 +37,7 @@ def analyze_gender_bias():
     
     # ========== CHART 2: HOURS BAR ===========
     fig2, ax2 = plt.subplots(figsize=(8, 6))
-    bars = ax2.bar(['Female', 'Male'], [female_hours, male_hours], color=colors, width=0.5)
+    bars = ax2.bar(['Feminine', 'Masculine'], [female_hours, male_hours], color=colors, width=0.5)
     ax2.set_ylabel('Hours', fontsize=12, weight='bold')
     ax2.set_title('Total Speaking Time (Hours)', fontsize=16, weight='bold', pad=20)
     ax2.set_ylim(0, max(female_hours, male_hours) * 1.2)
@@ -59,9 +59,9 @@ def analyze_gender_bias():
     width = 0.35
     
     bars1 = ax3.bar([i - width/2 for i in x], by_day_pct['F'], width, 
-                    label='Female', color='#E94B8B')
+                    label='Feminine', color='#E94B8B')
     bars2 = ax3.bar([i + width/2 for i in x], by_day_pct['M'], width,
-                    label='Male', color='#4A90E2')
+                    label='Masculine', color='#4A90E2')
     
     ax3.set_ylabel('Percentage (%)', fontsize=12, weight='bold')
     ax3.set_title('Gender Distribution by Day', fontsize=16, weight='bold', pad=20)
@@ -88,9 +88,9 @@ def analyze_gender_bias():
     width = 0.35
     
     bars1 = ax4.bar([i - width/2 for i in x], by_room_pct['F'], width,
-                    label='Female', color='#E94B8B')
+                    label='Feminine', color='#E94B8B')
     bars2 = ax4.bar([i + width/2 for i in x], by_room_pct['M'], width,
-                    label='Male', color='#4A90E2')
+                    label='Masculine', color='#4A90E2')
     
     ax4.set_ylabel('Percentage (%)', fontsize=12, weight='bold')
     ax4.set_title('Gender Distribution by Room', fontsize=16, weight='bold', pad=20)
@@ -122,8 +122,8 @@ def analyze_gender_bias():
     session_counts = sessions['type'].value_counts()
     
     fig5, ax5 = plt.subplots(figsize=(8, 6))
-    categories = ['Female Only', 'Mixed', 'Male Only']
-    values = [session_counts.get(cat, 0) for cat in categories]
+    categories = ['Feminine Only', 'Mixed', 'Masculine Only']
+    values = [session_counts.get('Female Only', 0), session_counts.get('Mixed', 0), session_counts.get('Male Only', 0)]
     colors_session = ['#E94B8B', '#95A5A6', '#4A90E2']
     
     bars = ax5.bar(categories, values, color=colors_session, width=0.6)
@@ -142,55 +142,20 @@ def analyze_gender_bias():
     
     # ========== SUMMARY TEXT ===========
     summary_text = f"""
-## 📊 Key Findings
+## 🚨 Main Finding
 
-### Overall Gender Gap
-- **Female:** {female_hours:.1f} hours ({female_percent:.1f}%)
-- **Male:** {male_hours:.1f} hours ({male_percent:.1f}%)
+**Masculine speakers have {diff_percent:.1f}% MORE speaking time than feminine speakers**
 
-### 🚨 **Men have {diff_percent:.1f}% MORE speaking time than women**
+({male_hours:.1f}h masculine vs {female_hours:.1f}h feminine)
 
 ---
 
-### Distribution by Day
-"""
-    
-    for day in day_order:
-        f_pct = by_day_pct.loc[day, 'F']
-        m_pct = by_day_pct.loc[day, 'M']
-        icon = "⚠️" if m_pct > 70 else "✅"
-        summary_text += f"\n- **{day}:** Female {f_pct:.1f}% | Male {m_pct:.1f}% {icon}"
-    
-    summary_text += f"""
+## 💡 Where the Bias is Concentrated
 
----
-
-### Distribution by Room
-"""
-    
-    for room in room_order:
-        f_pct = by_room_pct.loc[room, 'F']
-        m_pct = by_room_pct.loc[room, 'M']
-        summary_text += f"\n- **{room}:** Female {f_pct:.1f}% | Male {m_pct:.1f}%"
-    
-    summary_text += f"""
-
----
-
-### Session Composition
-- **Mixed sessions:** {session_counts.get('Mixed', 0)}
-- **Male-only sessions:** {session_counts.get('Male Only', 0)}
-- **Female-only sessions:** {session_counts.get('Female Only', 0)}
-
-→ **{session_counts.get('Male Only', 0) / max(session_counts.get('Female Only', 1), 1):.1f}× more male-only sessions**
-
----
-
-### 💡 Main Takeaways
-1. **Days 1 & 2** show largest imbalance (>70% male)
-2. **Pool (R1)** (main stage) is heavily male-dominated  
-3. **Long-format sessions** are mostly male-only
-4. These patterns reflect **structural curation choices**
+1. **Days 1 & 2** are the most imbalanced (>70% masculine)
+2. **Pool (R1)** main stage has the strongest masculine bias
+3. **{session_counts.get('Male Only', 0) / max(session_counts.get('Female Only', 1), 1):.1f}× more masculine-only sessions** than feminine-only
+4. These patterns are not accidental — they reflect **structural curation choices**
 """
     
     return summary_text, fig1, fig2, fig3, fig4, fig5
@@ -243,8 +208,11 @@ with gr.Blocks(
     ---
     ### ⚠️ Important Note
     
-    This analysis uses binary categories (male/female) based on provided data.  
-    We recognize that gender is a spectrum and this simplification has limitations.
+    This analysis uses binary categories (masculine/feminine) based on provided data.  
+    We recognize that gender is a spectrum and this simplification has significant limitations.
+    
+    This tool does NOT assume that masculine = men or feminine = women.  
+    Gender identity is self-determined and cannot be inferred from names.
     
     **Developed from a critical and anti-colonial perspective** to expose structural biases.
     
