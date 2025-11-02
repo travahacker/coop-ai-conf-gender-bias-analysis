@@ -1,17 +1,15 @@
 import gradio as gr
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 def analyze_gender_bias():
     """
-    Comprehensive gender bias analysis with detailed insights
+    Comprehensive gender bias analysis with matplotlib charts
     """
     # Load data
     df = pd.read_csv('data.csv', sep=';')
-    
-    # Normalize room names
     df['room_normalized'] = df['room'].replace({'The Pool (R1)': 'Pool (R1)'})
     
     # Calculate totals
@@ -24,119 +22,94 @@ def analyze_gender_bias():
     female_percent = (gender_time['F'] / total_time) * 100
     diff_percent = ((male_hours - female_hours) / female_hours * 100)
     
-    # ========== CHART 1: PIE - % TIME ===========
-    pie_df = pd.DataFrame({
-        'Gender': ['Female', 'Male'],
-        'Percentage': [female_percent, male_percent]
-    })
-    
-    fig_pie = px.pie(
-        pie_df,
-        values='Percentage',
-        names='Gender',
-        title='<b>Speaking Time Distribution</b>',
-        color='Gender',
-        color_discrete_map={'Female': '#E94B8B', 'Male': '#4A90E2'},
-        hole=0.4
+    # ========== CHART 1: PIE ===========
+    fig1, ax1 = plt.subplots(figsize=(8, 6))
+    colors = ['#E94B8B', '#4A90E2']
+    wedges, texts, autotexts = ax1.pie(
+        [female_percent, male_percent],
+        labels=['Female', 'Male'],
+        colors=colors,
+        autopct='%1.1f%%',
+        startangle=90,
+        textprops={'fontsize': 14, 'weight': 'bold'}
     )
+    ax1.set_title('Speaking Time Distribution', fontsize=16, weight='bold', pad=20)
     
-    fig_pie.update_traces(
-        textposition='inside',
-        textinfo='percent+label',
-        textfont_size=18,
-        marker=dict(line=dict(color='white', width=3))
-    )
+    # ========== CHART 2: HOURS BAR ===========
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    bars = ax2.bar(['Female', 'Male'], [female_hours, male_hours], color=colors, width=0.5)
+    ax2.set_ylabel('Hours', fontsize=12, weight='bold')
+    ax2.set_title('Total Speaking Time (Hours)', fontsize=16, weight='bold', pad=20)
+    ax2.set_ylim(0, max(female_hours, male_hours) * 1.2)
     
-    fig_pie.update_layout(
-        font=dict(size=16),
-        height=450,
-        showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5)
-    )
+    # Add value labels
+    for bar in bars:
+        height = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}h', ha='center', va='bottom', fontsize=14, weight='bold')
     
-    # ========== CHART 2: BY DAY ===========
+    # ========== CHART 3: BY DAY - SIMPLIFIED ===========
     by_day = df.groupby(['day', 'gender'])['allocated_minutes'].sum().unstack(fill_value=0)
     by_day_pct = by_day.div(by_day.sum(axis=1), axis=0) * 100
-    # Garantir ordem correta
     day_order = ['Day 1', 'Day 2', 'Day 3', 'Day 4']
     by_day_pct = by_day_pct.reindex(day_order)
     
-    fig_by_day = go.Figure()
+    fig3, ax3 = plt.subplots(figsize=(10, 6))
+    x = range(len(day_order))
+    width = 0.35
     
-    fig_by_day.add_trace(go.Bar(
-        name='Female',
-        x=day_order,
-        y=by_day_pct['F'].values,
-        marker_color='#E94B8B',
-        text=[f'{val:.1f}%' for val in by_day_pct['F'].values],
-        textposition='inside',
-        textfont=dict(size=14, color='white')
-    ))
+    bars1 = ax3.bar([i - width/2 for i in x], by_day_pct['F'], width, 
+                    label='Female', color='#E94B8B')
+    bars2 = ax3.bar([i + width/2 for i in x], by_day_pct['M'], width,
+                    label='Male', color='#4A90E2')
     
-    fig_by_day.add_trace(go.Bar(
-        name='Male',
-        x=day_order,
-        y=by_day_pct['M'].values,
-        marker_color='#4A90E2',
-        text=[f'{val:.1f}%' for val in by_day_pct['M'].values],
-        textposition='inside',
-        textfont=dict(size=14, color='white')
-    ))
+    ax3.set_ylabel('Percentage (%)', fontsize=12, weight='bold')
+    ax3.set_title('Gender Distribution by Day', fontsize=16, weight='bold', pad=20)
+    ax3.set_xticks(x)
+    ax3.set_xticklabels(day_order)
+    ax3.legend(loc='upper right', fontsize=12)
+    ax3.set_ylim(0, 100)
     
-    fig_by_day.update_layout(
-        title='<b>Gender Distribution by Day</b>',
-        barmode='stack',
-        xaxis_title='',
-        yaxis_title='Percentage',
-        font=dict(size=14),
-        height=400,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
+    # Add value labels
+    for bars in [bars1, bars2]:
+        for bar in bars:
+            height = bar.get_height()
+            ax3.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{height:.1f}%', ha='center', va='bottom', fontsize=10)
     
-    # ========== CHART 3: BY ROOM ===========
+    # ========== CHART 4: BY ROOM - SIMPLIFIED ===========
     by_room = df.groupby(['room_normalized', 'gender'])['allocated_minutes'].sum().unstack(fill_value=0)
     by_room_pct = by_room.div(by_room.sum(axis=1), axis=0) * 100
-    # Garantir ordem correta
     room_order = ['Hangar (R3)', 'Hobby (R2)', 'Pool (R1)']
     by_room_pct = by_room_pct.reindex(room_order)
     
-    fig_by_room = go.Figure()
+    fig4, ax4 = plt.subplots(figsize=(10, 6))
+    x = range(len(room_order))
+    width = 0.35
     
-    fig_by_room.add_trace(go.Bar(
-        name='Female',
-        x=room_order,
-        y=by_room_pct['F'].values,
-        marker_color='#E94B8B',
-        text=[f'{val:.1f}%' for val in by_room_pct['F'].values],
-        textposition='inside',
-        textfont=dict(size=14, color='white')
-    ))
+    bars1 = ax4.bar([i - width/2 for i in x], by_room_pct['F'], width,
+                    label='Female', color='#E94B8B')
+    bars2 = ax4.bar([i + width/2 for i in x], by_room_pct['M'], width,
+                    label='Male', color='#4A90E2')
     
-    fig_by_room.add_trace(go.Bar(
-        name='Male',
-        x=room_order,
-        y=by_room_pct['M'].values,
-        marker_color='#4A90E2',
-        text=[f'{val:.1f}%' for val in by_room_pct['M'].values],
-        textposition='inside',
-        textfont=dict(size=14, color='white')
-    ))
+    ax4.set_ylabel('Percentage (%)', fontsize=12, weight='bold')
+    ax4.set_title('Gender Distribution by Room', fontsize=16, weight='bold', pad=20)
+    ax4.set_xticks(x)
+    ax4.set_xticklabels(room_order, rotation=15, ha='right')
+    ax4.legend(loc='upper right', fontsize=12)
+    ax4.set_ylim(0, 100)
     
-    fig_by_room.update_layout(
-        title='<b>Gender Distribution by Room</b>',
-        barmode='stack',
-        xaxis_title='',
-        yaxis_title='Percentage',
-        font=dict(size=14),
-        height=400,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
+    # Add value labels
+    for bars in [bars1, bars2]:
+        for bar in bars:
+            height = bar.get_height()
+            ax4.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{height:.1f}%', ha='center', va='bottom', fontsize=10)
     
-    # ========== CHART 4: SESSION COMPOSITION ===========
+    # ========== CHART 5: SESSION COMPOSITION ===========
     sessions = df.groupby('title').agg({
         'gender': lambda x: list(x),
-        'speaker': 'count',
-        'duration_min': 'first'
+        'speaker': 'count'
     }).reset_index()
     
     sessions['num_male'] = sessions['gender'].apply(lambda x: x.count('M'))
@@ -148,51 +121,26 @@ def analyze_gender_bias():
     
     session_counts = sessions['type'].value_counts()
     
-    fig_sessions = go.Figure(data=[go.Bar(
-        x=['Female Only', 'Mixed', 'Male Only'],
-        y=[session_counts.get('Female Only', 0), session_counts.get('Mixed', 0), session_counts.get('Male Only', 0)],
-        marker_color=['#E94B8B', '#95A5A6', '#4A90E2'],
-        text=[session_counts.get('Female Only', 0), session_counts.get('Mixed', 0), session_counts.get('Male Only', 0)],
-        textposition='outside',
-        textfont=dict(size=18, color='black'),
-        width=0.6
-    )])
+    fig5, ax5 = plt.subplots(figsize=(8, 6))
+    categories = ['Female Only', 'Mixed', 'Male Only']
+    values = [session_counts.get(cat, 0) for cat in categories]
+    colors_session = ['#E94B8B', '#95A5A6', '#4A90E2']
     
-    fig_sessions.update_layout(
-        title='<b>Session Composition</b>',
-        xaxis_title='',
-        yaxis_title='Number of Sessions',
-        font=dict(size=14),
-        height=400,
-        showlegend=False,
-        yaxis=dict(range=[0, session_counts.max() * 1.3])
-    )
+    bars = ax5.bar(categories, values, color=colors_session, width=0.6)
+    ax5.set_ylabel('Number of Sessions', fontsize=12, weight='bold')
+    ax5.set_title('Session Composition', fontsize=16, weight='bold', pad=20)
+    ax5.set_ylim(0, max(values) * 1.3)
     
-    # ========== CHART 5: HOURS COMPARISON ===========
-    fig_hours = go.Figure()
+    # Add value labels
+    for bar in bars:
+        height = bar.get_height()
+        ax5.text(bar.get_x() + bar.get_width()/2., height,
+                f'{int(height)}', ha='center', va='bottom', fontsize=14, weight='bold')
     
-    fig_hours.add_trace(go.Bar(
-        x=['Female', 'Male'],
-        y=[female_hours, male_hours],
-        marker_color=['#E94B8B', '#4A90E2'],
-        text=[f'{female_hours:.1f}h', f'{male_hours:.1f}h'],
-        textposition='outside',
-        textfont=dict(size=20, color='black'),
-        width=0.5
-    ))
+    # Close all figures after saving
+    plt.tight_layout()
     
-    fig_hours.update_layout(
-        title='<b>Total Speaking Time (Hours)</b>',
-        xaxis_title='',
-        yaxis_title='Hours',
-        font=dict(size=16),
-        height=450,
-        showlegend=False,
-        yaxis=dict(range=[0, max(female_hours, male_hours) * 1.2])
-    )
-    
-    # ========== ANALYSIS TEXT ===========
-    # Find most imbalanced sessions
+    # ========== SUMMARY TEXT ===========
     male_only_sessions = sessions[sessions['type'] == 'Male Only'].nlargest(5, 'duration_min')
     
     summary_text = f"""
@@ -209,12 +157,11 @@ def analyze_gender_bias():
 ### Distribution by Day
 """
     
-    for day in ['Day 1', 'Day 2', 'Day 3', 'Day 4']:
-        if day in by_day_pct.index:
-            f_pct = by_day_pct.loc[day, 'F']
-            m_pct = by_day_pct.loc[day, 'M']
-            icon = "⚠️" if m_pct > 70 else "✅"
-            summary_text += f"\n- **{day}:** Female {f_pct:.1f}% | Male {m_pct:.1f}% {icon}"
+    for day in day_order:
+        f_pct = by_day_pct.loc[day, 'F']
+        m_pct = by_day_pct.loc[day, 'M']
+        icon = "⚠️" if m_pct > 70 else "✅"
+        summary_text += f"\n- **{day}:** Female {f_pct:.1f}% | Male {m_pct:.1f}% {icon}"
     
     summary_text += f"""
 
@@ -223,7 +170,7 @@ def analyze_gender_bias():
 ### Distribution by Room
 """
     
-    for room in by_room_pct.index:
+    for room in room_order:
         f_pct = by_room_pct.loc[room, 'F']
         m_pct = by_room_pct.loc[room, 'M']
         summary_text += f"\n- **{room}:** Female {f_pct:.1f}% | Male {m_pct:.1f}%"
@@ -237,56 +184,33 @@ def analyze_gender_bias():
 - **Male-only sessions:** {session_counts.get('Male Only', 0)}
 - **Female-only sessions:** {session_counts.get('Female Only', 0)}
 
-→ **{session_counts.get('Male Only', 0) / session_counts.get('Female Only', 1):.1f}× more male-only sessions**
+→ **{session_counts.get('Male Only', 0) / max(session_counts.get('Female Only', 1), 1):.1f}× more male-only sessions**
 
 ---
 
-### Longest Male-Only Sessions
+### 💡 Main Takeaways
+1. **Days 1 & 2** show largest imbalance (>70% male)
+2. **Pool (R1)** (main stage) is heavily male-dominated  
+3. **Long-format sessions** are mostly male-only
+4. These patterns reflect **structural curation choices**
 """
     
-    for _, session in male_only_sessions.iterrows():
-        summary_text += f"\n- **{session['title'][:60]}...** ({session['duration_min']} min)"
-    
-    summary_text += """
-
----
-
-### 💡 Where Bias is Concentrated
-1. **Days 1 & 2** show the largest imbalance (>70% male)
-2. **Pool (R1)** (main stage) is heavily male-dominated
-3. **Long-format sessions** (screenings, keynotes) are mostly male-only
-4. These patterns reflect structural **curation choices**
-
-"""
-    
-    # Create summary dataframe
-    summary_df = pd.DataFrame({
-        'Day': by_day_pct.index,
-        'Female %': [f'{val:.1f}%' for val in by_day_pct['F']],
-        'Male %': [f'{val:.1f}%' for val in by_day_pct['M']]
-    })
-    
-    return summary_text, fig_pie, fig_by_day, fig_by_room, fig_sessions, fig_hours, summary_df
+    return summary_text, fig1, fig2, fig3, fig4, fig5
 
 
 # Gradio Interface
 with gr.Blocks(
     title="Gender Bias Analysis - Cooperative AI Conference",
-    theme=gr.themes.Soft(primary_hue="purple", secondary_hue="pink"),
-    css="""
-    .gradio-container {
-        max-width: 1400px !important;
-    }
-    """
+    theme=gr.themes.Soft(primary_hue="purple", secondary_hue="pink")
 ) as demo:
     
     gr.Markdown("""
     # 🔍 Gender Bias Analysis
     ## Cooperative AI Conference
     
-    Comprehensive analysis of speaking time distribution by gender at the Cooperative AI Conference.
+    Analysis of speaking time distribution by gender at the Cooperative AI Conference.
     
-    **Data:** 124 participations | **Last updated:** Nov 2024
+    **Data:** 124 participations | **Updated:** Nov 2024
     
     ---
     """)
@@ -294,31 +218,28 @@ with gr.Blocks(
     analyze_btn = gr.Button("🚀 Analyze", variant="primary", size="lg")
     
     with gr.Row():
-        summary_output = gr.Markdown(label="Analysis Summary")
+        summary_output = gr.Markdown(label="📊 Analysis Summary")
     
-    gr.Markdown("## 📊 Overall Distribution")
+    gr.Markdown("## Overall Distribution")
     
     with gr.Row():
-        with gr.Column(scale=1):
+        with gr.Column():
             pie_chart = gr.Plot(label="% of Speaking Time")
-        with gr.Column(scale=1):
+        with gr.Column():
             hours_chart = gr.Plot(label="Total Hours")
     
-    gr.Markdown("## 📅 Distribution Across Event")
+    gr.Markdown("## Distribution by Day & Room")
     
     with gr.Row():
-        with gr.Column():
-            by_day_chart = gr.Plot(label="By Day")
-        with gr.Column():
-            by_room_chart = gr.Plot(label="By Room")
+        by_day_chart = gr.Plot(label="By Day (Grouped Bars)")
     
-    gr.Markdown("## 🎭 Session Analysis")
+    with gr.Row():
+        by_room_chart = gr.Plot(label="By Room (Grouped Bars)")
+    
+    gr.Markdown("## Session Analysis")
     
     with gr.Row():
         sessions_chart = gr.Plot(label="Session Composition")
-    
-    with gr.Accordion("📈 Day-by-Day Breakdown", open=False):
-        summary_table = gr.Dataframe(label="Daily Percentages")
     
     gr.Markdown("""
     ---
@@ -329,8 +250,6 @@ with gr.Blocks(
     
     **Developed from a critical and anti-colonial perspective** to expose structural biases.
     
-    Data validated against event program scraping - 124 participations analyzed.
-    
     ---
     *Developed by [Veronyka](https://huggingface.co/Veronyka)* 💜
     """)
@@ -338,7 +257,7 @@ with gr.Blocks(
     analyze_btn.click(
         fn=analyze_gender_bias,
         inputs=[],
-        outputs=[summary_output, pie_chart, by_day_chart, by_room_chart, sessions_chart, hours_chart, summary_table]
+        outputs=[summary_output, pie_chart, hours_chart, by_day_chart, by_room_chart, sessions_chart]
     )
 
 if __name__ == "__main__":
