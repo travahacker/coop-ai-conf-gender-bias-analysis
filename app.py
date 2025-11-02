@@ -109,7 +109,8 @@ def analyze_gender_bias():
     # ========== CHART 5: SESSION COMPOSITION ===========
     sessions = df.groupby('title').agg({
         'gender': lambda x: list(x),
-        'speaker': 'count'
+        'speaker': 'count',
+        'duration_min': 'first'
     }).reset_index()
     
     sessions['num_male'] = sessions['gender'].apply(lambda x: x.count('M'))
@@ -137,6 +138,43 @@ def analyze_gender_bias():
         ax5.text(bar.get_x() + bar.get_width()/2., height,
                 f'{int(height)}', ha='center', va='bottom', fontsize=14, weight='bold')
     
+    # ========== CHART 6: TOP MASCULINE-ONLY SESSIONS ===========
+    male_only_long = sessions[sessions['type'] == 'Male Only'].nlargest(7, 'duration_min')
+    
+    fig6, ax6 = plt.subplots(figsize=(10, 6))
+    # Truncar títulos longos
+    titles_short = [t[:50] + '...' if len(t) > 50 else t for t in male_only_long['title']]
+    y_pos = range(len(titles_short))
+    
+    bars = ax6.barh(y_pos, male_only_long['duration_min'], color='#4A90E2')
+    ax6.set_yticks(y_pos)
+    ax6.set_yticklabels(titles_short, fontsize=10)
+    ax6.set_xlabel('Duration (minutes)', fontsize=12, weight='bold')
+    ax6.set_title('Longest Masculine-Only Sessions', fontsize=16, weight='bold', pad=20)
+    ax6.invert_yaxis()
+    
+    # Add duration labels
+    for i, (bar, dur) in enumerate(zip(bars, male_only_long['duration_min'])):
+        ax6.text(dur + 2, i, f'{int(dur)} min', va='center', fontsize=10, weight='bold')
+    
+    # ========== CHART 7: AVERAGE DURATION BY TYPE ===========
+    avg_duration = sessions.groupby('type')['duration_min'].mean().reindex(['Female Only', 'Mixed', 'Male Only'])
+    
+    fig7, ax7 = plt.subplots(figsize=(8, 6))
+    categories_avg = ['Feminine Only', 'Mixed', 'Masculine Only']
+    values_avg = avg_duration.values
+    
+    bars = ax7.bar(categories_avg, values_avg, color=colors_session, width=0.6)
+    ax7.set_ylabel('Average Duration (minutes)', fontsize=12, weight='bold')
+    ax7.set_title('Average Session Duration by Type', fontsize=16, weight='bold', pad=20)
+    ax7.set_ylim(0, max(values_avg) * 1.2)
+    
+    # Add value labels
+    for bar in bars:
+        height = bar.get_height()
+        ax7.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f} min', ha='center', va='bottom', fontsize=12, weight='bold')
+    
     # Close all figures after saving
     plt.tight_layout()
     
@@ -155,10 +193,13 @@ def analyze_gender_bias():
 1. **Days 1 & 2** are the most imbalanced (>70% masculine)
 2. **Pool (R1)** main stage has the strongest masculine bias
 3. **{session_counts.get('Male Only', 0) / max(session_counts.get('Female Only', 1), 1):.1f}× more masculine-only sessions** than feminine-only
-4. These patterns are not accidental — they reflect **structural curation choices**
+4. **Long-format sessions** (screenings, keynotes) tend to be masculine-only
+5. **Masculine sessions are {avg_duration.loc['Male Only']:.0f}% longer** on average ({avg_duration.loc['Male Only']:.0f} min vs {avg_duration.loc['Female Only']:.0f} min)
+
+These patterns are not accidental — they reflect **structural curation choices**.
 """
     
-    return summary_text, fig1, fig2, fig3, fig4, fig5
+    return summary_text, fig1, fig2, fig3, fig4, fig5, fig6, fig7
 
 
 # Gradio Interface
@@ -204,6 +245,14 @@ with gr.Blocks(
     with gr.Row():
         sessions_chart = gr.Plot(label="Session Composition")
     
+    with gr.Row():
+        avg_duration_chart = gr.Plot(label="Average Duration by Type")
+    
+    gr.Markdown("## Long Masculine-Only Sessions")
+    
+    with gr.Row():
+        long_sessions_chart = gr.Plot(label="Top 7 Longest Masculine-Only Sessions")
+    
     gr.Markdown("""
     ---
     ### ⚠️ Important Note
@@ -223,7 +272,7 @@ with gr.Blocks(
     analyze_btn.click(
         fn=analyze_gender_bias,
         inputs=[],
-        outputs=[summary_output, pie_chart, hours_chart, by_day_chart, by_room_chart, sessions_chart]
+        outputs=[summary_output, pie_chart, hours_chart, by_day_chart, by_room_chart, sessions_chart, long_sessions_chart, avg_duration_chart]
     )
 
 if __name__ == "__main__":
