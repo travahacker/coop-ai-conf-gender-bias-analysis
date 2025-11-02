@@ -5,38 +5,38 @@ import plotly.graph_objects as go
 
 def analyze_gender_bias():
     """
-    Analisa viés de gênero baseado na planilha de dados do evento
+    Analyzes gender bias based on conference event data
     """
-    # Carregar dados
-    df = pd.read_csv('data.csv')
+    # Load data (semicolon separated)
+    df = pd.read_csv('data.csv', sep=';')
     
-    # Mapear M/F para português
-    gender_map = {'M': 'Masculino', 'F': 'Feminino'}
-    df['Gênero'] = df['gender'].map(gender_map)
+    # Map M/F to English
+    gender_map = {'M': 'Male', 'F': 'Female'}
+    df['Gender'] = df['gender'].map(gender_map)
     
-    # Agregar tempo por gênero
-    gender_summary = df.groupby('Gênero').agg({
+    # Aggregate time by gender
+    gender_summary = df.groupby('Gender').agg({
         'allocated_minutes': 'sum',
         'speaker': 'count'
     }).reset_index()
     
-    gender_summary.columns = ['Gênero', 'Tempo Total (min)', 'Participações']
-    gender_summary['Tempo Total (horas)'] = (gender_summary['Tempo Total (min)'] / 60).round(2)
+    gender_summary.columns = ['Gender', 'Total Time (min)', 'Participations']
+    gender_summary['Total Time (hours)'] = (gender_summary['Total Time (min)'] / 60).round(2)
     
-    # Calcular percentuais
-    total_time = gender_summary['Tempo Total (min)'].sum()
-    gender_summary['Percentual'] = ((gender_summary['Tempo Total (min)'] / total_time) * 100).round(1)
+    # Calculate percentages
+    total_time = gender_summary['Total Time (min)'].sum()
+    gender_summary['Percentage'] = ((gender_summary['Total Time (min)'] / total_time) * 100).round(1)
     
-    # Gráfico de Pizza
+    # Pie Chart
     fig_pie = px.pie(
         gender_summary,
-        values='Tempo Total (min)',
-        names='Gênero',
-        title='Distribuição de Tempo por Gênero na Conferência IA Cooperativa',
-        color='Gênero',
+        values='Total Time (min)',
+        names='Gender',
+        title='Time Distribution by Gender at Cooperative AI Conference',
+        color='Gender',
         color_discrete_map={
-            'Masculino': '#4A90E2',
-            'Feminino': '#E94B8B'
+            'Male': '#4A90E2',
+            'Female': '#E94B8B'
         },
         hole=0.3
     )
@@ -61,80 +61,80 @@ def analyze_gender_bias():
         )
     )
     
-    # Gráfico de Barras
+    # Bar Chart
     fig_bars = go.Figure()
     
-    colors = ['#4A90E2' if g == 'Masculino' else '#E94B8B' for g in gender_summary['Gênero']]
+    colors = ['#4A90E2' if g == 'Male' else '#E94B8B' for g in gender_summary['Gender']]
     
     fig_bars.add_trace(go.Bar(
-        x=gender_summary['Gênero'],
-        y=gender_summary['Tempo Total (horas)'],
+        x=gender_summary['Gender'],
+        y=gender_summary['Total Time (hours)'],
         marker_color=colors,
-        text=gender_summary['Tempo Total (horas)'],
+        text=gender_summary['Total Time (hours)'],
         textposition='outside',
         textfont=dict(size=16)
     ))
     
     fig_bars.update_layout(
-        title='Comparação de Tempo Total por Gênero (em horas)',
-        xaxis_title='Gênero',
-        yaxis_title='Tempo Total (horas)',
+        title='Total Time Comparison by Gender (hours)',
+        xaxis_title='Gender',
+        yaxis_title='Total Time (hours)',
         font=dict(size=14),
         height=500,
         showlegend=False
     )
     
-    # Criar tabela resumo
+    # Create summary text
     summary_text = f"""
-## 📊 Resultado da Análise
+## 📊 Analysis Results
 
-**Total de participações:** {len(df)}  
-**Tempo total do evento:** {total_time/60:.1f} horas
+**Total participations:** {len(df)}  
+**Total event time:** {total_time/60:.1f} hours
 
-### Distribuição por Gênero:
+### Distribution by Gender:
 """
     
     for _, row in gender_summary.iterrows():
         summary_text += f"""
-**{row['Gênero'].upper()}**  
-- Tempo total: {row['Tempo Total (horas)']} horas ({row['Percentual']:.1f}% do total)  
-- Número de participações: {int(row['Participações'])}  
+**{row['Gender'].upper()}**  
+- Total time: {row['Total Time (hours)']} hours ({row['Percentage']:.1f}% of total)  
+- Number of participations: {int(row['Participations'])}  
 """
     
-    # Calcular viés
-    masc = gender_summary[gender_summary['Gênero'] == 'Masculino']
-    fem = gender_summary[gender_summary['Gênero'] == 'Feminino']
+    # Calculate bias
+    male = gender_summary[gender_summary['Gender'] == 'Male']
+    female = gender_summary[gender_summary['Gender'] == 'Female']
     
-    if not masc.empty and not fem.empty:
-        masc_time = masc['Tempo Total (min)'].values[0]
-        fem_time = fem['Tempo Total (min)'].values[0]
-        diff_percent = ((masc_time - fem_time) / fem_time * 100) if fem_time > 0 else 0
+    if not male.empty and not female.empty:
+        male_time = male['Total Time (min)'].values[0]
+        female_time = female['Total Time (min)'].values[0]
+        diff_percent = ((male_time - female_time) / female_time * 100) if female_time > 0 else 0
         
         summary_text += f"""
 ---
-### 🚨 Análise de Viés:
+### 🚨 Bias Analysis:
 """
         if diff_percent > 10:
             summary_text += f"""
-⚠️ **Pessoas identificadas como MASCULINO têm {diff_percent:.1f}% MAIS TEMPO** que pessoas identificadas como feminino.
+⚠️ **People identified as MALE have {diff_percent:.1f}% MORE TIME** than people identified as female.
 
-Isso indica um **VIÉS DE GÊNERO SIGNIFICATIVO** na organização do evento.
+This indicates a **SIGNIFICANT GENDER BIAS** in the event organization.
 """
         elif diff_percent < -10:
             summary_text += f"""
-✅ Pessoas identificadas como FEMININO têm {abs(diff_percent):.1f}% mais tempo que pessoas identificadas como masculino.
+✅ People identified as FEMALE have {abs(diff_percent):.1f}% more time than people identified as male.
 """
         else:
             summary_text += f"""
-✅ A distribuição de tempo entre gêneros está **relativamente balanceada** (diferença de {abs(diff_percent):.1f}%).
+✅ Time distribution between genders is **relatively balanced** ({abs(diff_percent):.1f}% difference).
 """
     
     return summary_text, fig_pie, fig_bars, gender_summary
 
 
-# Interface Gradio
+# Gradio Interface
 with gr.Blocks(
-    title="Análise de Viés de Gênero - Conferência IA Cooperativa",
+    title="Gender Bias Analysis - Cooperative AI Conference",
     theme=gr.themes.Soft(
         primary_hue="purple",
         secondary_hue="pink"
@@ -142,46 +142,46 @@ with gr.Blocks(
 ) as demo:
     
     gr.Markdown("""
-    # 🔍 Análise de Viés de Gênero em Evento
+    # 🔍 Gender Bias Analysis in Event
     
-    ## Conferência IA Cooperativa
+    ## Cooperative AI Conference
     
-    Esta ferramenta analisa a distribuição de tempo entre palestrantes por gênero 
-    na Conferência de IA Cooperativa da Platform Coop.
+    This tool analyzes the time distribution among speakers by gender 
+    at the Cooperative AI Conference by Platform Coop.
     
     ---
     """)
     
     analyze_btn = gr.Button(
-        "🚀 Analisar",
+        "🚀 Analyze",
         variant="primary",
         size="lg",
         scale=1
     )
     
     with gr.Row():
-        summary_output = gr.Markdown(label="Resumo da Análise")
+        summary_output = gr.Markdown(label="Analysis Summary")
     
     with gr.Row():
         with gr.Column():
-            pie_chart = gr.Plot(label="Distribuição Percentual")
+            pie_chart = gr.Plot(label="Percentage Distribution")
         with gr.Column():
-            bar_chart = gr.Plot(label="Comparação em Horas")
+            bar_chart = gr.Plot(label="Hours Comparison")
     
-    with gr.Accordion("📈 Dados Detalhados", open=False):
-        summary_table = gr.Dataframe(label="Resumo por Gênero")
+    with gr.Accordion("📈 Detailed Data", open=False):
+        summary_table = gr.Dataframe(label="Summary by Gender")
     
     gr.Markdown("""
     ---
-    ### ⚠️ Nota Importante
+    ### ⚠️ Important Note
     
-    Esta análise utiliza categorias binárias (masculino/feminino) baseadas nos dados fornecidos.  
-    Reconhecemos que gênero é um espectro e esta simplificação tem limitações.
+    This analysis uses binary categories (male/female) based on the provided data.  
+    We recognize that gender is a spectrum and this simplification has limitations.
     
-    **Desenvolvido sob perspectiva crítica e contracolonial** para expor possíveis vieses estruturais.
+    **Developed from a critical and anti-colonial perspective** to expose possible structural biases.
     
     ---
-    *Desenvolvido por [Veronyka](https://huggingface.co/Veronyka)* 💜
+    *Developed by [Veronyka](https://huggingface.co/Veronyka)* 💜
     """)
     
     analyze_btn.click(

@@ -1,5 +1,5 @@
 ---
-title: Análise de Viés de Gênero - Cooperative AI Conference
+title: Gender Bias Analysis - Cooperative AI Conference
 emoji: 🔍
 colorFrom: purple
 colorTo: pink
@@ -10,89 +10,83 @@ pinned: false
 license: mit
 ---
 
-# 🔍 Análise de Viés de Gênero - Cooperative AI Conference
+# 🔍 Gender Bias Analysis - Cooperative AI Conference
 
-## Sobre
+## About
 
-Esta ferramenta analisa a programação da [Cooperative AI Conference](https://platform.coop/events/cooperativeai/program/) da Platform Cooperativism Consortium e identifica possíveis vieses de gênero na distribuição de tempo entre palestrantes.
+This tool analyzes the schedule of the [Cooperative AI Conference](https://platform.coop/events/cooperativeai/program/) by Platform Cooperativism Consortium and identifies potential gender biases in the distribution of speaking time.
 
-## Objetivo
+## Objective
 
-Verificar se há um viés estrutural na alocação de tempo de fala, especialmente se pessoas identificadas como homens cis recebem mais tempo devido à composição da organização.
+To verify if there is a structural bias in the allocation of speaking time, especially if people identified as cis men receive more time due to the organization's composition.
 
-## Metodologia
+## Methodology
 
-1. **Scraping**: Extrai automaticamente todas as sessões e participantes do site oficial do evento
-2. **Cálculo de duração**: Determina quanto tempo cada sessão tem baseado na programação
-3. **Análise de gênero**: Estima o gênero dos participantes baseado em seus primeiros nomes usando a biblioteca `gender-guesser`
-4. **Agregação**: Calcula estatísticas de distribuição de tempo por gênero estimado
-5. **Visualização**: Gera gráficos e tabelas para facilitar a análise
+1. **Data Loading**: Uses curated CSV data with speaker information and allocated time
+2. **Gender Mapping**: Maps binary gender categories (M/F) for analysis
+3. **Aggregation**: Calculates time distribution statistics by gender
+4. **Visualization**: Generates charts and tables to facilitate analysis
 
-## Funcionalidades
+## Features
 
-- ✅ Extração automática da programação em tempo real
-- ✅ Análise de gênero por nomes internacionais
-- ✅ Visualizações interativas (gráficos de pizza e barras)
-- ✅ Tabelas detalhadas por participante
-- ✅ Estatísticas agregadas por gênero
-- ✅ Cálculo de percentuais e comparações
+- ✅ Clean and focused interface
+- ✅ Interactive visualizations (pie and bar charts)
+- ✅ Detailed tables by gender
+- ✅ Aggregate statistics
+- ✅ Percentage calculations and comparisons
 
-## Limitações e Considerações Éticas
+## Limitations and Ethical Considerations
 
-⚠️ **Importante**: Esta ferramenta tem várias limitações que devem ser consideradas:
+⚠️ **Important**: This tool has several limitations that should be considered:
 
-1. **Gênero binário**: A análise assume categorias binárias (masculino/feminino), o que é uma simplificação problemática da realidade de gênero
-2. **Detecção por nome**: Gênero não pode ser determinado por nome. Esta é apenas uma aproximação estatística
-3. **Viés cultural**: A biblioteca de detecção tem viés para nomes ocidentais
-4. **Identidades não-binárias**: Não captura adequadamente pessoas não-binárias, transgênero ou com identidades de gênero diversas
-5. **Precisão limitada**: Especialmente para nomes internacionais e multiculturais
+1. **Binary gender**: The analysis assumes binary categories (male/female), which is a problematic simplification of gender reality
+2. **Non-binary identities**: Does not adequately capture non-binary, transgender, or gender-diverse people
+3. **Data-based**: Analysis is based on provided data classification
 
-## Contexto de Desenvolvimento
+## Development Context
 
-Esta ferramenta foi desenvolvida sob uma **perspectiva crítica e contracolonial** para:
-- Expor possíveis vieses estruturais em espaços acadêmicos e de conferências
-- Questionar a distribuição de poder e voz em eventos
-- Fornecer dados para reflexões sobre equidade
-- **NÃO** para reforçar binarismos ou essencialismos de gênero
+This tool was developed from a **critical and anti-colonial perspective** to:
+- Expose possible structural biases in academic and conference spaces
+- Question the distribution of power and voice at events
+- Provide data for reflections on equity
+- **NOT** to reinforce binary views or gender essentialism
 
-## Uso Responsável
+## Responsible Use
 
-Esta análise deve ser usada como:
-- ✅ Ponto de partida para discussões sobre equidade
-- ✅ Ferramenta de reflexão sobre vieses estruturais
-- ✅ Indicador aproximado (não verdade absoluta)
+This analysis should be used as:
+- ✅ Starting point for discussions about equity
+- ✅ Tool for reflection on structural biases
+- ✅ Approximate indicator (not absolute truth)
 
-E **NÃO** como:
-- ❌ Determinação definitiva de gênero de pessoas
-- ❌ Ferramenta de vigilância ou classificação de indivíduos
-- ❌ Substituto para autodeclaração
+And **NOT** as:
+- ❌ Definitive determination of people's gender
+- ❌ Surveillance or classification tool for individuals
+- ❌ Substitute for self-declaration
 
-## Tecnologias
+## Technologies
 
-- **Python 3.12+**
-- **Gradio**: Interface web
-- **BeautifulSoup**: Web scraping
-- **Pandas**: Análise de dados
-- **Gender Guesser**: Estimativa de gênero por nome
-- **Plotly**: Visualizações interativas
+- **Python 3.10+**
+- **Gradio**: Web interface
+- **Pandas**: Data analysis
+- **Plotly**: Interactive visualizations
 
-## Como Usar
+## How to Use
 
-1. Clique no botão "🚀 Analisar Programação"
-2. Aguarde a extração e análise dos dados
-3. Explore os gráficos e tabelas gerados
-4. Baixe os dados para análise adicional se desejar
+1. Click the "🚀 Analyze" button
+2. Wait for data processing
+3. Explore the generated charts and tables
+4. Download data for additional analysis if desired
 
-## Desenvolvimento
+## Development
 
-Desenvolvido por [Veronyka](https://huggingface.co/Veronyka)
+Developed by [Veronyka](https://huggingface.co/Veronyka)
 
-Sob perspectiva crítica, feminista e contracolonial 💜
+From a critical, feminist, and anti-colonial perspective 💜
 
-## Licença
+## License
 
-MIT License - Uso livre com atribuição
+MIT License - Free use with attribution
 
 ---
 
-**Nota**: Esta é uma ferramenta de pesquisa e reflexão. Os resultados devem ser interpretados com cautela e consciência de suas limitações.
+**Note**: This is a research and reflection tool. Results should be interpreted with caution and awareness of its limitations.
