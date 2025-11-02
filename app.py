@@ -25,11 +25,18 @@ def analyze_gender_bias():
     diff_percent = ((male_hours - female_hours) / female_hours * 100)
     
     # ========== CHART 1: PIE - % TIME ===========
+    pie_df = pd.DataFrame({
+        'Gender': ['Female', 'Male'],
+        'Percentage': [female_percent, male_percent]
+    })
+    
     fig_pie = px.pie(
-        values=[female_percent, male_percent],
-        names=['Female', 'Male'],
+        pie_df,
+        values='Percentage',
+        names='Gender',
         title='<b>Speaking Time Distribution</b>',
-        color_discrete_sequence=['#E94B8B', '#4A90E2'],
+        color='Gender',
+        color_discrete_map={'Female': '#E94B8B', 'Male': '#4A90E2'},
         hole=0.4
     )
     
@@ -50,25 +57,28 @@ def analyze_gender_bias():
     # ========== CHART 2: BY DAY ===========
     by_day = df.groupby(['day', 'gender'])['allocated_minutes'].sum().unstack(fill_value=0)
     by_day_pct = by_day.div(by_day.sum(axis=1), axis=0) * 100
+    # Garantir ordem correta
+    day_order = ['Day 1', 'Day 2', 'Day 3', 'Day 4']
+    by_day_pct = by_day_pct.reindex(day_order)
     
     fig_by_day = go.Figure()
     
     fig_by_day.add_trace(go.Bar(
         name='Female',
-        x=by_day_pct.index,
-        y=by_day_pct['F'],
+        x=day_order,
+        y=by_day_pct['F'].values,
         marker_color='#E94B8B',
-        text=[f'{val:.1f}%' for val in by_day_pct['F']],
+        text=[f'{val:.1f}%' for val in by_day_pct['F'].values],
         textposition='inside',
         textfont=dict(size=14, color='white')
     ))
     
     fig_by_day.add_trace(go.Bar(
         name='Male',
-        x=by_day_pct.index,
-        y=by_day_pct['M'],
+        x=day_order,
+        y=by_day_pct['M'].values,
         marker_color='#4A90E2',
-        text=[f'{val:.1f}%' for val in by_day_pct['M']],
+        text=[f'{val:.1f}%' for val in by_day_pct['M'].values],
         textposition='inside',
         textfont=dict(size=14, color='white')
     ))
@@ -86,25 +96,28 @@ def analyze_gender_bias():
     # ========== CHART 3: BY ROOM ===========
     by_room = df.groupby(['room_normalized', 'gender'])['allocated_minutes'].sum().unstack(fill_value=0)
     by_room_pct = by_room.div(by_room.sum(axis=1), axis=0) * 100
+    # Garantir ordem correta
+    room_order = ['Hangar (R3)', 'Hobby (R2)', 'Pool (R1)']
+    by_room_pct = by_room_pct.reindex(room_order)
     
     fig_by_room = go.Figure()
     
     fig_by_room.add_trace(go.Bar(
         name='Female',
-        x=by_room_pct.index,
-        y=by_room_pct['F'],
+        x=room_order,
+        y=by_room_pct['F'].values,
         marker_color='#E94B8B',
-        text=[f'{val:.1f}%' for val in by_room_pct['F']],
+        text=[f'{val:.1f}%' for val in by_room_pct['F'].values],
         textposition='inside',
         textfont=dict(size=14, color='white')
     ))
     
     fig_by_room.add_trace(go.Bar(
         name='Male',
-        x=by_room_pct.index,
-        y=by_room_pct['M'],
+        x=room_order,
+        y=by_room_pct['M'].values,
         marker_color='#4A90E2',
-        text=[f'{val:.1f}%' for val in by_room_pct['M']],
+        text=[f'{val:.1f}%' for val in by_room_pct['M'].values],
         textposition='inside',
         textfont=dict(size=14, color='white')
     ))
