@@ -141,8 +141,6 @@ def analyze_gender_bias():
     plt.tight_layout()
     
     # ========== SUMMARY TEXT ===========
-    male_only_sessions = sessions[sessions['type'] == 'Male Only'].nlargest(5, 'duration_min')
-    
     summary_text = f"""
 ## 📊 Key Findings
 
