@@ -9,12 +9,12 @@ import plotly.graph_objects as go
 import re
 
 class GenderResolver:
-    """Resolve g?nero usando m?ltiplas estrat?gias - APENAS masculino ou feminino"""
+    """Resolve gênero usando múltiplas estratégias - APENAS masculino ou feminino"""
     def __init__(self):
         self.detector = gender.Detector()
         self.cache = {}
         
-        # Dicion?rio manual baseado em pesquisa dos nomes da confer?ncia
+        # Dicionário manual baseado em pesquisa dos nomes da conferência
         self.manual_overrides = {
             'Itir': 'feminino', 'Trebor': 'masculino', 'Morshed': 'masculino',
             'Oktay': 'masculino', 'Jeongone': 'feminino', 'Akkanut': 'masculino',
@@ -59,7 +59,7 @@ class GenderResolver:
         elif guess in ['female', 'mostly_female']:
             result = 'feminino'
         else:
-            # 3. Fallback: heur?stica por termina??o
+            # 3. Fallback: heurística por terminação
             if first_name[-1].lower() in ['a', 'e', 'i'] and len(first_name) > 3:
                 result = 'feminino'
             else:
@@ -71,7 +71,7 @@ class GenderResolver:
 
 def scrape_conference_program():
     """
-    Extrai todas as sess?es da programa??o do evento Cooperative AI
+    Extrai todas as sessões da programação do evento Cooperative AI
     """
     url = "https://platform.coop/events/cooperativeai/program/"
     
@@ -90,7 +90,7 @@ def scrape_conference_program():
             
             time_str = time_elem.get('datetime', '')
             title_elem = session.find('p', class_='session__title')
-            title = title_elem.get_text(strip=True) if title_elem else "Sem t?tulo"
+            title = title_elem.get_text(strip=True) if title_elem else "Sem título"
             
             participants_elem = session.find('p', class_='session__participants')
             participants = []
@@ -106,7 +106,7 @@ def scrape_conference_program():
                     'num_participants': len(participants)
                 })
         
-        # Calcular dura??es
+        # Calcular durações
         for i in range(len(sessions)):
             current_time = datetime.fromisoformat(sessions[i]['time'])
             
@@ -127,7 +127,7 @@ def scrape_conference_program():
 
 def analyze_conference_bias():
     """
-    Analisa poss?vel vi?s de g?nero na distribui??o de tempo por palestrante
+    Analisa possível viés de gênero na distribuição de tempo por palestrante
     """
     sessions = scrape_conference_program()
     
@@ -148,86 +148,86 @@ def analyze_conference_bias():
                 gender_guess = resolver.analyze_gender(participant)
                 participants_data.append({
                     'Nome': participant,
-                    'Sess?o': session['title'],
-                    'Hor?rio': session['time_formatted'],
-                    'Dura??o da Sess?o (min)': session['duration_minutes'],
-                    'Tempo Atribu?do (min)': time_per_person,
-                    'G?nero Estimado': gender_guess
+                    'Sessão': session['title'],
+                    'Horário': session['time_formatted'],
+                    'Duração da Sessão (min)': session['duration_minutes'],
+                    'Tempo Atribuído (min)': time_per_person,
+                    'Gênero Estimado': gender_guess
                 })
     
     # Criar DataFrame
     df = pd.DataFrame(participants_data)
     
-    # An?lise agregada por g?nero
-    gender_summary = df.groupby('G?nero Estimado').agg({
-        'Tempo Atribu?do (min)': ['sum', 'count', 'mean']
+    # Análise agregada por gênero
+    gender_summary = df.groupby('Gênero Estimado').agg({
+        'Tempo Atribuído (min)': ['sum', 'count', 'mean']
     }).round(2)
     
-    gender_summary.columns = ['Tempo Total (min)', 'N?mero de Participa??es', 'Tempo M?dio por Participa??o (min)']
+    gender_summary.columns = ['Tempo Total (min)', 'Número de Participações', 'Tempo Médio por Participação (min)']
     gender_summary = gender_summary.reset_index()
     
     # Converter tempo para horas
     gender_summary['Tempo Total (horas)'] = (gender_summary['Tempo Total (min)'] / 60).round(2)
     
-    # Gr?fico de pizza
+    # Gráfico de pizza
     fig_pie = px.pie(
         gender_summary, 
         values='Tempo Total (min)', 
-        names='G?nero Estimado',
-        title='Distribui??o de Tempo Total por G?nero Estimado',
+        names='Gênero Estimado',
+        title='Distribuição de Tempo Total por Gênero Estimado',
         color_discrete_map={
             'masculino': '#4A90E2',
             'feminino': '#E94B8B'
         }
     )
     
-    # Gr?fico de barras
+    # Gráfico de barras
     fig_bars = go.Figure()
     
     colors_map = {'masculino': '#4A90E2', 'feminino': '#E94B8B'}
-    bar_colors = [colors_map.get(g, '#95A5A6') for g in gender_summary['G?nero Estimado']]
+    bar_colors = [colors_map.get(g, '#95A5A6') for g in gender_summary['Gênero Estimado']]
     
     fig_bars.add_trace(go.Bar(
         name='Tempo Total (horas)',
-        x=gender_summary['G?nero Estimado'],
+        x=gender_summary['Gênero Estimado'],
         y=gender_summary['Tempo Total (horas)'],
         marker_color=bar_colors
     ))
     
     fig_bars.update_layout(
-        title='Tempo Total de Participa??o por G?nero',
-        xaxis_title='G?nero Estimado',
+        title='Tempo Total de Participação por Gênero',
+        xaxis_title='Gênero Estimado',
         yaxis_title='Tempo Total (horas)',
         showlegend=False
     )
     
-    # Estat?sticas
+    # Estatísticas
     total_time = gender_summary['Tempo Total (min)'].sum()
     gender_summary['Percentual do Tempo'] = ((gender_summary['Tempo Total (min)'] / total_time) * 100).round(2)
     
-    # Texto de an?lise
+    # Texto de análise
     analysis_text = f"""
-## ?? An?lise de Vi?s de G?nero - Cooperative AI Conference
+## 🔍 Análise de Viés de Gênero - Cooperative AI Conference
 
 ### Resumo Geral:
-- **Total de participa??es analisadas:** {len(df)}
-- **Tempo total de programa??o:** {total_time/60:.2f} horas
-- **N?mero de sess?es:** {len(sessions)}
+- **Total de participações analisadas:** {len(df)}
+- **Tempo total de programação:** {total_time/60:.2f} horas
+- **Número de sessões:** {len(sessions)}
 
-### Distribui??o por G?nero:
+### Distribuição por Gênero:
 """
     
     for _, row in gender_summary.iterrows():
         analysis_text += f"""
-**{row['G?nero Estimado'].upper()}:**
+**{row['Gênero Estimado'].upper()}:**
 - Tempo total: {row['Tempo Total (horas)']} horas ({row['Percentual do Tempo']:.1f}% do total)
-- N?mero de participa??es: {int(row['N?mero de Participa??es'])}
-- Tempo m?dio por participa??o: {row['Tempo M?dio por Participa??o (min)']:.1f} minutos
+- Número de participações: {int(row['Número de Participações'])}
+- Tempo médio por participação: {row['Tempo Médio por Participação (min)']:.1f} minutos
 """
     
-    # Calcular diferen?a entre masculino e feminino
-    masc_row = gender_summary[gender_summary['G?nero Estimado'] == 'masculino']
-    fem_row = gender_summary[gender_summary['G?nero Estimado'] == 'feminino']
+    # Calcular diferença entre masculino e feminino
+    masc_row = gender_summary[gender_summary['Gênero Estimado'] == 'masculino']
+    fem_row = gender_summary[gender_summary['Gênero Estimado'] == 'feminino']
     
     if not masc_row.empty and not fem_row.empty:
         masc_time = masc_row['Tempo Total (min)'].values[0]
@@ -235,80 +235,80 @@ def analyze_conference_bias():
         diff_percent = ((masc_time - fem_time) / fem_time * 100) if fem_time > 0 else 0
         
         analysis_text += f"""
-### ?? An?lise de Vi?s:
+### 🚨 Análise de Viés:
 """
         if diff_percent > 10:
             analysis_text += f"""
-- Pessoas identificadas como **masculino** t?m **{diff_percent:.1f}% mais tempo** que pessoas identificadas como feminino.
-- Isso indica um **VI?S DE G?NERO SIGNIFICATIVO** na organiza??o do evento.
+- Pessoas identificadas como **masculino** têm **{diff_percent:.1f}% mais tempo** que pessoas identificadas como feminino.
+- Isso indica um **VIÉS DE GÊNERO SIGNIFICATIVO** na organização do evento.
 """
         elif diff_percent < -10:
             analysis_text += f"""
-- Pessoas identificadas como **feminino** t?m **{abs(diff_percent):.1f}% mais tempo** que pessoas identificadas como masculino.
+- Pessoas identificadas como **feminino** têm **{abs(diff_percent):.1f}% mais tempo** que pessoas identificadas como masculino.
 """
         else:
             analysis_text += f"""
-- A distribui??o de tempo entre g?neros est? **relativamente balanceada** (diferen?a de {abs(diff_percent):.1f}%).
+- A distribuição de tempo entre gêneros está **relativamente balanceada** (diferença de {abs(diff_percent):.1f}%).
 """
     
     analysis_text += """
 
-### ?? Limita??es da An?lise:
-- A detec??o de g?nero ? baseada em **nomes** e pode conter erros
-- **Assume g?nero bin?rio** (masculino/feminino) - simplifica??o problem?tica
-- N?o captura identidades n?o-bin?rias, transg?nero ou de g?nero diverso
-- Classifica??o baseada em nome ? identidade de g?nero real
-- Esta an?lise ? um **indicador aproximado** e n?o uma verdade absoluta
+### ⚠️ Limitações da Análise:
+- A detecção de gênero é baseada em **nomes** e pode conter erros
+- **Assume gênero binário** (masculino/feminino) - simplificação problemática
+- Não captura identidades não-binárias, transgênero ou de gênero diverso
+- Classificação baseada em nome ≠ identidade de gênero real
+- Esta análise é um **indicador aproximado** e não uma verdade absoluta
 """
     
     return analysis_text, df, gender_summary, fig_pie, fig_bars
 
 
 # Interface Gradio
-with gr.Blocks(title="An?lise de Vi?s de G?nero - Cooperative AI Conference", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="Análise de Viés de Gênero - Cooperative AI Conference", theme=gr.themes.Soft()) as demo:
     gr.Markdown("""
-    # ?? An?lise de Vi?s de G?nero em Confer?ncia
+    # 🔍 Análise de Viés de Gênero em Conferência
     
     ## Cooperative AI Conference - Platform Coop
     
-    Esta ferramenta analisa a programa??o do evento [Cooperative AI](https://platform.coop/events/cooperativeai/program/) 
-    e identifica poss?veis vieses de g?nero na distribui??o de tempo entre palestrantes.
+    Esta ferramenta analisa a programação do evento [Cooperative AI](https://platform.coop/events/cooperativeai/program/) 
+    e identifica possíveis vieses de gênero na distribuição de tempo entre palestrantes.
     
     **Metodologia:**
-    1. Extrai todas as sess?es e participantes do site do evento
-    2. Calcula a dura??o de cada sess?o
-    3. Estima o g?nero dos participantes baseado em seus nomes (masculino ou feminino)
-    4. Analisa a distribui??o de tempo por g?nero estimado
+    1. Extrai todas as sessões e participantes do site do evento
+    2. Calcula a duração de cada sessão
+    3. Estima o gênero dos participantes baseado em seus nomes (masculino ou feminino)
+    4. Analisa a distribuição de tempo por gênero estimado
     
-    **Objetivo:** Verificar se h? vi?s de g?nero na aloca??o de tempo.
+    **Objetivo:** Verificar se há viés de gênero na alocação de tempo.
     
     ---
     """)
     
-    analyze_btn = gr.Button("?? Analisar Programa??o", variant="primary", size="lg")
+    analyze_btn = gr.Button("🚀 Analisar Programação", variant="primary", size="lg")
     
     with gr.Row():
         with gr.Column():
-            analysis_output = gr.Markdown(label="An?lise")
+            analysis_output = gr.Markdown(label="Análise")
         with gr.Column():
-            pie_chart = gr.Plot(label="Distribui??o de Tempo por G?nero")
+            pie_chart = gr.Plot(label="Distribuição de Tempo por Gênero")
     
-    bar_chart = gr.Plot(label="Compara??o de Tempo por G?nero")
+    bar_chart = gr.Plot(label="Comparação de Tempo por Gênero")
     
-    with gr.Accordion("?? Dados Detalhados por Participante", open=False):
+    with gr.Accordion("📊 Dados Detalhados por Participante", open=False):
         detailed_table = gr.Dataframe(label="Dados Completos")
     
-    with gr.Accordion("?? Sum?rio por G?nero", open=False):
-        summary_table = gr.Dataframe(label="Resumo Estat?stico")
+    with gr.Accordion("📈 Sumário por Gênero", open=False):
+        summary_table = gr.Dataframe(label="Resumo Estatístico")
     
     gr.Markdown("""
     ---
-    ### ?? Notas Importantes:
+    ### ⚠️ Notas Importantes:
     
-    - **Limita??es ?ticas**: Esta an?lise assume g?nero bin?rio baseado em nomes, o que ? uma simplifica??o problem?tica.
-    - **Contexto**: Desenvolvida sob perspectiva cr?tica e contracolonial para expor poss?veis vieses estruturais.
-    - **Precis?o**: A detec??o autom?tica de g?nero por nome tem limita??es significativas.
-    - **Uso**: Ferramenta para reflex?o e n?o como verdade absoluta sobre identidades.
+    - **Limitações Éticas**: Esta análise assume gênero binário baseado em nomes, o que é uma simplificação problemática.
+    - **Contexto**: Desenvolvida sob perspectiva crítica e contracolonial para expor possíveis vieses estruturais.
+    - **Precisão**: A detecção automática de gênero por nome tem limitações significativas.
+    - **Uso**: Ferramenta para reflexão e não como verdade absoluta sobre identidades.
     
     ---
     
