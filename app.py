@@ -286,6 +286,8 @@ with gr.Blocks(
     
     Comprehensive analysis of speaking time distribution by gender at the Cooperative AI Conference.
     
+    **Data:** 124 participations | **Last updated:** Nov 2024
+    
     ---
     """)
     
